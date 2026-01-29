@@ -102,11 +102,7 @@ When a request arrives:
 * Constant or amortized constant time checks
 * Efficient data structures: Maps, Queues, Deques
 
-### 3. Concurrency
 
-* Thread-safe request handling
-* Atomic updates for counters and tokens
-* Supports high concurrent traffic
 
 ---
 
@@ -199,7 +195,6 @@ class RateLimitConfig {
 | Strategy                | Plug-and-play rate-limiting algorithms |
 | Factory                 | Instantiate correct limiter            |
 | Singleton (Optional)    | Central rate-limiter service           |
-| Thread-Safe Collections | Handle concurrency                     |
 
 ---
 
