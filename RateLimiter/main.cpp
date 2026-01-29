@@ -65,7 +65,7 @@ class SlidingWindowRateLimiter : public RateLimiter
 private:
     unordered_map<string, queue<time_t>> requests;
     int maxRequests;
-    int windowSize; // seconds
+    int windowSize; 
 
 public:
     SlidingWindowRateLimiter(int maxReq, int window)
@@ -91,6 +91,49 @@ public:
     ~SlidingWindowRateLimiter() = default;
 };
 
+//-------------------token-bucket-----------------------------
+class TokenBucketRateLimiter : public RateLimiter {
+private:
+    unordered_map<string, int> tokens;
+    unordered_map<string, time_t> lastRefill;
+
+    int maxTokens;
+    int windowSize; 
+
+public:
+    TokenBucketRateLimiter(int maxReq, int window)
+        : maxTokens(maxReq), windowSize(window) {}
+
+    bool allowRequest(const string& userId) override {
+        time_t now = time(nullptr);
+        if (lastRefill.find(userId) == lastRefill.end()) {
+            tokens[userId] = maxTokens;
+            lastRefill[userId] = now;
+        }
+        double elapsed = difftime(now, lastRefill[userId]);
+        double refillRate = (double)maxTokens / windowSize;
+
+        int newTokens = (int)(elapsed * refillRate);
+
+        if (newTokens > 0) {
+            tokens[userId] = min(maxTokens, tokens[userId] + newTokens);
+            lastRefill[userId] = now;
+        }
+        if (tokens[userId] > 0) {
+            tokens[userId]--;
+            return true;
+        }
+
+        return false;
+    }
+
+    ~TokenBucketRateLimiter() = default;
+};
+
+
+
+
+
 // ---------------- Factory ----------------
 class RateLimiterFactory
 {
@@ -105,6 +148,10 @@ public:
                 config.maxRequests, config.timeWindow);
         case AlgorithmType::SLIDING_WINDOW:
             return make_unique<SlidingWindowRateLimiter>(
+                config.maxRequests,
+                config.timeWindow);
+        case AlgorithmType::TOKEN_BUCKET:
+            return make_unique<TokenBucketRateLimiter>(
                 config.maxRequests,
                 config.timeWindow);
         default:
@@ -142,7 +189,7 @@ int main()
 {
     RateLimiterService service;
 
-    RateLimitConfig config{5, 30, AlgorithmType::SLIDING_WINDOW};
+    RateLimitConfig config{5, 30, AlgorithmType::TOKEN_BUCKET};
     service.addConfig("user_1", config);
 
     cout << "Counter Rate Limiter Test (5 req / 10 sec)\n";
