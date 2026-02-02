@@ -1,8 +1,6 @@
-#include<bits/stdc++.h>
-using namespace std;
-class SlipGenerator{
-    public:
-        SlipGenerator(string msg){
-            cout<<msg<<endl;
-        }
-};
+#include "include/SlipGenerator.h"
+#include <iostream>
+
+void SlipGenerator::print(const std::string &msg) {
+    std::cout << msg << std::endl;
+}

@@ -1,118 +1,59 @@
-#include<bits/stdc++.h>
-using namespace std;
+#include "include/BankService.h"
+#include "include/Account.h"
+#include "include/Card.h"
 
+#include <stdexcept>
 
- enum class OperationType{
-    WITHDRAW_CASH,
-    DEPOSITE_CASH,
-    CHECH_BALANCE 
-};
-class Card{
-    private:
-        string cardNumber;
-        string pin;
-    public :
-        Card(string crdNo , string p){
-            this->cardNumber = crdNo;
-            pin = p;
-        }
+// Simple implementations - ownership is intentionally naive for the demo
+BankService::BankService() {}
+BankService::~BankService() {
+    for (auto &p : cardsByNumber) delete p.second;
+    for (auto &p : accountsByNumber) delete p.second;
+}
 
-        void setPin(string pin){
-            this->pin = pin;
-        }
+Account* BankService::createAccount(const std::string &accountNumber, double balance) {
+    if (accountsByNumber.count(accountNumber)) throw std::runtime_error("Account already exists");
+    Account *a = new Account(accountNumber, balance);
+    accountsByNumber[accountNumber] = a;
+    return a;
+}
 
-        string getPin(){
-            return pin;
-        }
+Card* BankService::createCard(const std::string &cardNumber, const std::string &pin) {
+    if (cardsByNumber.count(cardNumber)) throw std::runtime_error("Card already exists");
+    Card *c = new Card(cardNumber, pin);
+    cardsByNumber[cardNumber] = c;
+    return c;
+}
 
-        string getCardNumber(){
-            return cardNumber;
-        }
-};
+void BankService::linkCardToAccount(Card *card, Account *account) {
+    if (!card || !account) return;
+    cardsByNumber[card->getCardNumber()] = card;
+    accountsByNumber[account->getAccountNumber()] = account;
+    cardToAccount[card->getCardNumber()] = account;
+    account->linkCard(card);
+}
 
+bool BankService::authenticate(const std::string &cardNumber, const std::string &pin) const {
+    auto it = cardsByNumber.find(cardNumber);
+    if (it == cardsByNumber.end()) return false;
+    return it->second->getPin() == pin;
+}
 
-class Account{
-    unordered_map<string , Card *> cards;
-    double balance;
-    string accountNumber;
-    public :
-        Account(double balance , string accNo){
-            balance = 0;
-            accountNumber = accNo;
-        }
+double BankService::getBalance(const std::string &cardNumber) const {
+    auto it = cardToAccount.find(cardNumber);
+    if (it == cardToAccount.end()) throw std::runtime_error("Card not linked to account");
+    return it->second->getBalance();
+}
 
-        string getAccountNumber(){
-            return accountNumber;
-        }
+bool BankService::deposit(const std::string &cardNumber, double amount) {
+    auto it = cardToAccount.find(cardNumber);
+    if (it == cardToAccount.end()) return false;
+    it->second->deposit(amount);
+    return true;
+}
 
-
-        void depositeMoney(double amount){
-            balance += amount;
-        }
-
-
-        bool withdrawMoney(double amount ){
-            if(balance >= amount){
-                balance -= amount;
-                return true;
-            }
-            else{
-                return false;
-            }
-        }
-
-        double getBalance(){
-            return balance;
-        }  
-};
-
-class BankService{
-    unordered_map<string , Card *> cards;
-    unordered_map<string , Account *> accounts;
-    unordered_map<Card * , Account *> cardtoAccount;
-    public :
-        BankService(){
-            
-        }
-        void linkCardToAccount(Card *card , Account *account){
-            cards[card->getCardNumber()] = card;
-            accounts[account->getAccountNumber()] = account;
-            cardtoAccount[card] = account;
-        }
-
-        double getBalance(Card * card){
-            Account *account = cardtoAccount[card];
-            return account->getBalance();
-        }
-
-        void depositeMoney(Card *card , double amount){
-            Account *account = cardtoAccount[card];
-            account->depositeMoney(amount , cardNumber , pin);
-        }
-
-        Account * createAccount(string accountNumber , double balance = 0){
-            Account *account = new Account(balance , accountNumber);
-            return account;
-        }
-
-        Card * createCard(string cardNumber , string pin){
-            Card *card = new Card(cardNumber , pin);
-            return card;
-        }
-
-        void withdrawMoney(Card *card , double amount){
-            Card *card = cards[cardNumber];
-            Account *account = cardtoAccount[card];
-            account->withdrawMoney(amount);
-        }
-
-        bool authenticate(Card *card , string pin)
-        {
-            if(card->getPin() == pin)
-                return true;
-            else
-                return false;
-        }
-
-
-};
+bool BankService::withdraw(const std::string &cardNumber, double amount) {
+    auto it = cardToAccount.find(cardNumber);
+    if (it == cardToAccount.end()) return false;
+    return it->second->withdraw(amount);
+}
