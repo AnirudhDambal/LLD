@@ -31,16 +31,15 @@ int main() {
         std::cin.ignore(1000, '\n');
         switch (choice) {
             case 1: {
-                if (cardInserted) {
+                if (atm.getCurrentCard()) {
                     std::cout << "A card is already inserted.\n";
                 } else {
                     atm.insertCard(card);
-                    cardInserted = true;
                 }
                 break;
             }
             case 2: {
-                if (!cardInserted) {
+                if (!atm.getCurrentCard()) {
                     std::cout << "Insert card first.\n";
                 } else {
                     std::string pin;

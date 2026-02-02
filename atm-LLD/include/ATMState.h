@@ -13,4 +13,7 @@ public:
     virtual void depositCash(ATM &atm, double amount) = 0;
     virtual void checkBalance(ATM &atm) = 0;
     virtual void refillCash(ATM &atm, int amount) = 0;
+
+    // convenience helper: returns true if a card is currently inserted
+    bool hasCard(ATM &atm) { return atm.getCurrentCard() != nullptr; }
 };

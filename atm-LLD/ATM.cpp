@@ -72,8 +72,8 @@ public:
         atm.setState(atm.getNoCardState());
     }
     void enterPin(ATM &atm, const std::string &pin) override {
+        if (!hasCard(atm)) { SlipGenerator::print("No card"); return; }
         Card *c = atm.getCurrentCard();
-        if (!c) { SlipGenerator::print("No card"); return; }
         if (atm.getBankService()->authenticate(c->getCardNumber(), pin)) {
             SlipGenerator::print("PIN correct");
             atm.setState(atm.getAuthenticatedState());
@@ -89,15 +89,15 @@ public:
     }
     void requestWithdrawal(ATM &atm, int) override { SlipGenerator::print("Enter PIN first"); }
     void depositCash(ATM &atm, double amount) override {
+        if (!hasCard(atm)) { SlipGenerator::print("No card"); return; }
         Card *c = atm.getCurrentCard();
-        if (!c) { SlipGenerator::print("No card"); return; }
         atm.getBankService()->deposit(c->getCardNumber(), amount);
         SlipGenerator::print("Deposit successful");
         atm.ejectCard();
     }
     void checkBalance(ATM &atm) override {
+        if (!hasCard(atm)) { SlipGenerator::print("No card"); return; }
         auto *c = atm.getCurrentCard();
-        if (!c) { SlipGenerator::print("No card"); return; }
         double bal = atm.getBankService()->getBalance(c->getCardNumber());
         SlipGenerator::print("Balance: " + to_string(bal));
     }
@@ -118,8 +118,8 @@ public:
     }
     void enterPin(ATM &atm, const std::string &) override { SlipGenerator::print("Already authenticated"); }
     void requestWithdrawal(ATM &atm, int amount) override {
+        if (!hasCard(atm)) { SlipGenerator::print("No card"); atm.setState(atm.getNoCardState()); return; }
         Card *c = atm.getCurrentCard();
-        if (!c) { SlipGenerator::print("No card"); atm.setState(atm.getNoCardState()); return; }
         int availableATM = atm.getAvailableCash();
         if (amount > availableATM) {
             SlipGenerator::print("Insufficient cash in ATM");
@@ -160,7 +160,7 @@ public:
     void depositCash(ATM &atm, double) override { SlipGenerator::print("ATM out of cash"); }
     void checkBalance(ATM &atm) override {
         SlipGenerator::print("ATM out of cash - check balance at bank");
-        if (atm.getCurrentCard()) {
+        if (hasCard(atm)) {
             double bal = atm.getBankService()->getBalance(atm.getCurrentCard()->getCardNumber());
             SlipGenerator::print("Balance: " + to_string(bal));
         }
