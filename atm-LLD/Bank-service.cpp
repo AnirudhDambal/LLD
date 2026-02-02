@@ -1,11 +1,12 @@
 #include<bits/stdc++.h>
+using namespace std;
 
 
  enum class OperationType{
     WITHDRAW_CASH,
     DEPOSITE_CASH,
     CHECH_BALANCE 
-}
+};
 class Card{
     private:
         string cardNumber;
@@ -40,6 +41,11 @@ class Account{
             accountNumber = accNo;
         }
 
+        string getAccountNumber(){
+            return accountNumber;
+        }
+
+
         void depositeMoney(double amount){
             balance += amount;
         }
@@ -61,9 +67,9 @@ class Account{
 };
 
 class BankService{
-    unordered_map<string , card *> cards;
+    unordered_map<string , Card *> cards;
     unordered_map<string , Account *> accounts;
-    unordered_map<card * , Account *> cardtoAccount;
+    unordered_map<Card * , Account *> cardtoAccount;
     public :
         BankService(){
             
@@ -80,11 +86,6 @@ class BankService{
         }
 
         void depositeMoney(Card *card , double amount){
-            Card *card = cards[cardNumber];
-            if(card == nullptr)
-                return;
-            if(card->getPin() != pin)
-                return;
             Account *account = cardtoAccount[card];
             account->depositeMoney(amount , cardNumber , pin);
         }
